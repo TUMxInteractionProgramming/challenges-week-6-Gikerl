@@ -1,5 +1,8 @@
-/* start the external action and say hello */
-console.log("App is alive");
+/* eslint-disable no-console */
+/* eslint-disable no-undef */
+/* eslint-disable no-unused-vars */
+/*jslint devel: true */
+/*jslint browser: true*/
 
 /** #10 global #array of channels #arr*/
 var channels = [
@@ -27,7 +30,7 @@ var currentLocation = {
  * Switch channels name in the right app bar
  * @param channelObject
  */
-function switchChannel(channelObject) {
+function switchChannel(channelObject, channelElement) {
     // Log the channel switch
     console.log("Tuning in to channel", channelObject);
 
@@ -38,11 +41,11 @@ function switchChannel(channelObject) {
     document.getElementById('channel-name').innerHTML = channelObject.name;
 
     // change the channel location using object property
-    document.getElementById('channel-location').innerHTML = 'by <a href="http://w3w.co/'
-        + channelObject.createdBy
-        + '" target="_blank"><strong>'
-        + channelObject.createdBy
-        + '</strong></a>';
+    document.getElementById('channel-location').innerHTML = 'by <a href="http://w3w.co/' +
+        channelObject.createdBy +
+        '" target="_blank"><strong>' +
+        channelObject.createdBy +
+        '</strong></a>';
 
     //#9 selector adjusted for #btns #str
     $('#channel-star i').removeClass('fa-star fa-star-o');
@@ -52,10 +55,13 @@ function switchChannel(channelObject) {
     /* highlight the selected #channel.
        This is inefficient (jQuery has to search all channel list items), but we'll change it later on */
     $('#channels li').removeClass('selected');
-    $('#channels li:contains(' + channelObject.name + ')').addClass('selected');
+    $(channelElement).addClass('selected');
 
     /* store selected channel in global variable */
     currentChannel = channelObject;
+
+
+    showMessages();
 }
 
 /* liking a channel on #click */
@@ -105,7 +111,11 @@ function loadEmojis() {
     var emojis = require('emojis-list');
     $('#emojis').empty();
     for (emoji in emojis) {
-        $('#emojis').append(emojis[emoji] + " ");
+        var emojiObj = $('<span>').text(emojis[emoji] + " ").click(function (e) {
+            e.stopPropagation();
+            $("#message").val($("#message").val() + ($(this).html().trim()))
+        });
+        $('#emojis').append(emojiObj);
     }
 }
 
@@ -126,6 +136,20 @@ function Message(text) {
     this.text = text;
     // own message
     this.own = true;
+    this.object = $({});
+    this.Update = function () {
+        var timeRemaining = Math.round((this.expiresOn - Date.now()) / 100 / 60) / 10;
+        if (timeRemaining <= 0.0) {
+            $(this.object).remove();
+            return 1;
+        }
+        if (timeRemaining < 5.0) {
+            $(this.object).find("em").css("color", "#3F51B5");
+        }
+
+        $(this.object).find("em").html(timeRemaining + ' min. left');
+        return 0;
+    };
 }
 
 function sendMessage() {
@@ -147,7 +171,7 @@ function sendMessage() {
     currentChannel.messages.push(message);
 
     // #10 #increase the messageCount of the current channel
-    currentChannel.messageCount+=1;
+    currentChannel.messageCount += 1;
 
     // Adding the message to the messages-div
     $('#messages').append(createMessageElement(message));
@@ -159,6 +183,20 @@ function sendMessage() {
     $('#message').val('');
 }
 
+function showMessages() {
+    $("#messages").empty();
+
+    $.each(currentChannel.messages, function (i, message) {
+        $('#messages').append(createMessageElement(message));
+        message.Update();
+    });
+    /*
+    for (i = 0; i < currentChannel.messages.length; i++) {
+        createMessageElement(currentChannel.messages[i]);
+    }
+    */
+}
+
 /**
  * This function makes an html element out of message objects' properties.
  * @param messageObject a chat message object
@@ -168,19 +206,51 @@ function createMessageElement(messageObject) {
     // Calculating the expiresIn-time from the expiresOn-property
     var expiresIn = Math.round((messageObject.expiresOn - Date.now()) / 1000 / 60);
 
+    // create a message
+    var div;
+    if (messageObject.own) {
+        div = $('<div>').addClass('message').addClass('own');
+    } else {
+        div = $('<div>').addClass('message');
+    }
+
+    //Declare jQuery HTML elements
+    var h3 = $('<h3>');
+    var a = $('<a>').attr("href", '"http://w3w.co/' + messageObject.createdBy + '"').attr("target", "_blank");
+    var strong = $('<strong>').html(messageObject.createdBy);
+    var em = $('<em>').html(expiresIn + ' min. left');
+    var p = $('<p>').html(messageObject.text);
+    var button = $('<button>').html("+5 min.").addClass("accent").click(function (e) {
+        e.stopPropagation();
+        messageObject.expiresOn = new Date(messageObject.expiresOn.getTime() + 60 * 1000 * 5);
+        messageObject.Update();
+    });
+
+    //build message
+    strong = strong.append(a);
+    h3 = h3.append(strong).append(messageObject.createdOn.toLocaleString()).append(em);
+    div = div.append(h3).append(p).append(p).append(button);
+
+    // return the complete message
+    messageObject.object = div;
+    return div;
+
+
     // Creating a message-element
-    return '<div class="message'+
+    /*
+    return '<div class="message' +
         //this dynamically adds #own to the #message, based on the
         //ternary operator. We need () in order not to disrupt the return.
         (messageObject.own ? ' own' : '') +
         '">' +
-        '<h3><a href="http://w3w.co/' + messageObject.createdBy + '" target="_blank">'+
+        '<h3><a href="http://w3w.co/' + messageObject.createdBy + '" target="_blank">' +
         '<strong>' + messageObject.createdBy + '</strong></a>' +
         messageObject.createdOn.toLocaleString() +
         '<em>' + expiresIn + ' min. left</em></h3>' +
         '<p>' + messageObject.text + '</p>' +
         '<button class="accent">+5 min.</button>' +
         '</div>';
+        */
 }
 
 /* #10 Three #compare functions to #sort channels */
@@ -224,7 +294,9 @@ function listChannels(criterion) {
     /* #10 append channels from #array with a #for loop */
     for (i = 0; i < channels.length; i++) {
         $('#channels ul').append(createChannelElement(channels[i]));
-    };
+    }
+
+    $('#channels li:contains(' + currentChannel.name + ')').addClass('selected');
 }
 
 /**
@@ -284,11 +356,11 @@ function createChannel() {
         abortCreationMode();
         // #show #new channel's data
         document.getElementById('channel-name').innerHTML = channel.name;
-        document.getElementById('channel-location').innerHTML = 'by <a href="http://w3w.co/'
-            + channel.createdBy
-            + '" target="_blank"><strong>'
-            + channel.createdBy
-            + '</strong></a>';
+        document.getElementById('channel-location').innerHTML = 'by <a href="http://w3w.co/' +
+            channel.createdBy +
+            '" target="_blank"><strong>' +
+            channel.createdBy +
+            '</strong></a>';
     }
 }
 
@@ -309,7 +381,10 @@ function createChannelElement(channelObject) {
      */
 
     // create a channel
-    var channel = $('<li>').text(channelObject.name);
+    var channel = $('<li>').text(channelObject.name).click(function (e) {
+        e.stopPropagation();
+        switchChannel(channelObject, this);
+    });
 
     // create and append channel meta
     var meta = $('<span>').addClass('channel-meta').appendTo(channel);
@@ -354,4 +429,44 @@ function abortCreationMode() {
     $('#app-bar-create').removeClass('show');
     $('#button-create').hide();
     $('#button-send').show();
+}
+
+function MessageEventListeners() {
+    $("#message").keydown(function (e) {
+        if (e.which === 13) {
+            sendMessage();
+        }
+    });
+
+    //On Focus    
+    $("#message").focusin(function () {
+        $("#CharCounter").show();
+        $("#CharCounter").html(140 - $(this).val().length);
+    });
+
+    //On Focus    
+    $("#message").bind('input', function () {
+        $("#CharCounter").html(140 - $(this).val().length);
+    });
+
+    //Out Focus
+    $("#message").focusout(function () {
+        if ($("#message").val() === '') HideCharCounter();
+    });
+}
+
+function HideCharCounter() {
+    $("#CharCounter").hide();
+}
+
+function UpdateMessage() {
+    console.log("Updating message elements...");
+
+    $.each(currentChannel.messages, function (i, message) {
+        var bool = message.Update();
+        if (bool == 1) {
+            currentChannel.messages.splice(i, 1)
+            currentChannel.messageCount--;
+        }
+    });
 }

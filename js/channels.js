@@ -1,7 +1,20 @@
+/* eslint-disable no-console */
+/* eslint-disable no-undef */
+/* eslint-disable no-unused-vars */
+/*jslint devel: true */
+/*jslint browser: true*/
+
+
+/**
+ * This constructor function creates a new chat #message.
+ * @param text `String` a message text
+ * @constructor
+ */
+
 
 var yummy = {
     name: "#Yummy",
-    createdOn: new Date(2016, 03, 01), /* month 0 is jan. */
+    createdOn: new Date('April 1, 2016 12:00:00'),
     createdBy: "minus.plus.yummy",
     starred: false,
     expiresIn: 100,
@@ -11,7 +24,7 @@ var yummy = {
 
 var sevencontinents = {
     name: "#SevenContinents",
-    createdOn: new Date(2016, 03, 02), /* month 0 is jan. */
+    createdOn: new Date('April 1, 2016 12:00:00'),
     createdBy: "cheeses.yard.applies",
     starred: true,
     expiresIn: 60,
@@ -22,7 +35,7 @@ var sevencontinents = {
 
 var killerapp = {
     name: "#KillerApp",
-    createdOn: new Date(2016, 08, 30), /* month 0 is jan. */
+    createdOn: new Date('April 1, 2016 12:00:00'),
     createdBy: "lodge.bits.fake",
     starred: false,
     expiresIn: 1,
@@ -33,7 +46,7 @@ var killerapp = {
 
 var firstpersononmars = {
     name: "#FirstPersonOnMars",
-    createdOn: new Date(2016, 08, 28), /* month 0 is jan. */
+    createdOn: new Date('April 1, 2016 12:00:00'),
     createdBy: "snipped.atom.grid",
     starred: true,
     expiresIn: 30003,
@@ -44,7 +57,7 @@ var firstpersononmars = {
 
 var octoberfest = {
     name: "#Octoberfest",
-    createdOn: new Date(2016, 08, 25), /* month 0 is jan. */
+    createdOn: new Date('April 1, 2016 12:00:00'),
     createdBy: "vocally.clearly.crawled",
     starred: false,
     expiresIn: 60,
